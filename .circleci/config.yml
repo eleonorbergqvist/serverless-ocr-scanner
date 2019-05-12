@@ -1,0 +1,95 @@
+version: 2
+
+defaults: &defaults
+  working_directory: ~/repo
+
+filter_ignore_master: &filter_ignore_master
+  filters:
+    branches:
+      ignore:
+        - master
+        - /^release.*/
+    tags:
+      only:
+        - /^v.*/
+
+filter_only_develop_or_tag: &filter_only_develop_or_tag
+  filters:
+    branches:
+      only:
+        - develop
+    tags:
+      only:
+        - /^v.*/
+
+references:
+  restore_repo: &restore_repo
+    restore_cache:
+      keys:
+        - v1-repo-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+
+jobs:
+  checkout_code:
+    <<: *defaults
+    docker:
+      - image: circleci/node:8.10.0
+    steps:
+      - checkout
+      - save_cache:
+          key: v1-repo-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - .
+
+  serverless:
+    <<: *defaults
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - *restore_repo
+      - restore_cache:
+          key: v1-npm-{{ checksum "src/package.json" }}
+      - run: cd src && npm install
+      - save_cache:
+          key: v1-npm-{{ checksum "src/package.json" }}
+          paths:
+            - ~/repo/src/node_modules
+
+  deploy:
+    <<: *defaults
+    docker:
+      - image: circleci/node:8.10.0
+    steps:
+      - *restore_repo
+      - restore_cache:
+          key: v1-npm-{{ checksum "src/package.json" }}
+      - run: cd src && sudo npm install -g serverless
+      - run:
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "develop" ]; then
+              export AWS_ACCESS_KEY_ID=$STAGE_AWS_ACCESS_KEY_ID
+              export AWS_SECRET_ACCESS_KEY=$STAGE_AWS_SECRET_ACCESS_KEY
+
+              cd src && serverless deploy --stage stage
+            fi
+
+            if [ "${CIRCLE_TAG}" ]; then
+              export AWS_ACCESS_KEY_ID=$PROD_AWS_ACCESS_KEY_ID
+              export AWS_SECRET_ACCESS_KEY=$PROD_AWS_SECRET_ACCESS_KEY
+
+              cd src && serverless deploy --stage prod
+            fi
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - checkout_code:
+          <<: *filter_ignore_master
+      - serverless:
+          <<: *filter_ignore_master
+          requires:
+            - checkout_code
+      - deploy:
+          <<: *filter_only_develop_or_tag
+          requires:
+            - serverless
