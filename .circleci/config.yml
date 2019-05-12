@@ -49,6 +49,7 @@ jobs:
       - restore_cache:
           key: v1-npm-{{ checksum "src/package.json" }}
       - run: cd src && npm install
+      - run: cd src && npm test
       - save_cache:
           key: v1-npm-{{ checksum "src/package.json" }}
           paths:

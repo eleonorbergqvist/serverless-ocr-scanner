@@ -4,6 +4,16 @@ provider:
   name: aws
   runtime: nodejs8.10
   region: eu-west-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - textract:AnalyzeDocument
+        - textract:DetectDocumentText
+        - textract:GetDocumentAnalysis
+        - textract:GetDocumentTextDetection
+        - textract:StartDocumentAnalysis
+        - textract:StartDocumentTextDetection
+      Resource: "*"
 
 plugins:
   - serverless-offline
