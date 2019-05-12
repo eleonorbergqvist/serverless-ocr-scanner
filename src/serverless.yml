@@ -1,0 +1,18 @@
+service: ocr-scanner
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: eu-west-1
+
+plugins:
+  - serverless-offline
+
+functions:
+  helloWorld:
+    handler: handler.getImageText
+    events:
+      - http:
+          path: image-text
+          method: post
+          cors: true
