@@ -1,0 +1,35 @@
+service: ocr-scanner
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: eu-west-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - textract:AnalyzeDocument
+        - textract:DetectDocumentText
+        - textract:GetDocumentAnalysis
+        - textract:GetDocumentTextDetection
+        - textract:StartDocumentAnalysis
+        - textract:StartDocumentTextDetection
+      Resource: "*"
+
+plugins:
+  - serverless-offline
+
+functions:
+  getImageText:
+    handler: handler.getImageText
+    events:
+      - http:
+          path: image-text
+          method: post
+          cors: true
+  ping:
+    handler: handler.ping
+    events:
+      - http:
+          path: ping
+          method: get
+          cors: true
