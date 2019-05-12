@@ -1,4 +1,3 @@
-const AWS = require("aws-sdk");
 const textract = require("./textract")
 const textractParser = require("./textractParser")
 
@@ -55,7 +54,14 @@ const getImageText = async (event, context) => {
   }
 };
 
+const ping = async (_event, _context) => {
+  return {
+    statusCode: 200,
+    body: "pong"
+  }
+};
 
 module.exports = {
   getImageText,
+  ping,
 }

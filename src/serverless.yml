@@ -9,10 +9,17 @@ plugins:
   - serverless-offline
 
 functions:
-  helloWorld:
+  getImageText:
     handler: handler.getImageText
     events:
       - http:
           path: image-text
           method: post
+          cors: true
+  ping:
+    handler: handler.ping
+    events:
+      - http:
+          path: ping
+          method: get
           cors: true
